@@ -1,10 +1,9 @@
 # Rdoc - A command-line tool for launching documents
-This bash script is dedicated for all the Linux readers whom spend all      
-their time working on the Terminal; therfore they launch everything from there.   
-If you are the kind of person I described above, I believe that this tool can    
-help you and save you a lot of time.     
-This script purposes are to help you launch documents using your favorite PDF Viewer,    
-which will save you a lot of time if you have lots of documents like me.
+This bash script is dedicated for all the Linux readers whom spend all their time working on the Terminal;    
+therefore they launch everything from there.   
+If you are the kind of person I described above, I believe that this tool can help you and save you a lot of time.  
+This script purposes are to help you launch documents using your favorite PDF Viewer, which will    
+save you a lot of time if you have lots of documents like me.
 
 ## Requirements and Dependencies
 1. Bash 
