@@ -1,0 +1,295 @@
+#!/bin/env bash
+
+declare -r CONF_DIR_PATH=~/.config/rdoc
+declare -r CONF_DOC_DIR=$CONF_DIR_PATH/doc_dir
+declare -r CONF_PDF_VIEWER=$CONF_DIR_PATH/pdf_viewer
+declare -r TMP_FILE=/tmp/.rdoc_tmp
+
+
+fn_generate_configs() {
+	local doc_dir_path
+	local pdf_viewer_name
+
+	mkdir -p $CONF_DIR_PATH
+	
+	echo -n "Please enter your documents directorie's full path: "
+	read doc_dir_path
+	echo $doc_dir_path > $CONF_DOC_DIR
+
+	echo -ne "\nPlease enter your pdf's viewer name: "
+	read pdf_viewer_name
+	echo $pdf_viewer_name > $CONF_PDF_VIEWER
+	echo 
+
+	echo Your configurations were generated succesfully.
+}
+
+fn_read_configs() {
+	doc_dir=$(cat $CONF_DOC_DIR 2> /dev/null)
+	if [ ! $? -eq 0 ]; then 
+		echo Error: one or all of your configuration files are missing.
+		echo Try -h for help.
+		exit -1
+	fi
+
+	pdf_viewer=$(cat $CONF_PDF_VIEWER 2> /dev/null) 
+	if [ ! $? -eq 0 ]; then
+		echo Error: one or all of your configuration files are missing.
+		echo Try -h for help.
+		exit -1
+	fi
+}
+
+fn_search_for_book() {
+	local path
+	local grep_opt=""
+	local string_to_exclude=$1/
+	
+	if [ $i_status -eq 1 ]; then 
+		grep_opt=-i
+	fi
+
+	if [ $r_status -eq 1 ]; then #Search recursively  
+		for path in $1/*; do	
+			if [ -d $path ]; then 
+				fn_search_for_book $path
+			elif [ -f $path ]; then 
+				if echo $path | grep -q $grep_opt $book_name; then 
+					echo $path | sed "s|$string_to_exclude||" >> $TMP_FILE
+				fi
+			fi
+		done
+	else
+		for path in $1/*; do
+			if [ -f $path ]; then 
+				if echo $path | grep -q $grep_opt $book_name; then 
+					echo $path | sed "s|$string_to_exclude||" >> $TMP_FILE
+				fi
+			fi
+		done
+
+	fi
+}
+
+fn_display_books() {
+	local doc
+	local founded_docs
+	
+	#Make sure a book was founded and TMP_FILE was generated
+	founded_docs=$(cat $TMP_FILE 2> /dev/null)
+	if [ ! $? -eq 0 ]; then 	
+		echo Error: no document was found with \'$book_name\' in it.
+		exit -1
+	fi
+
+	echo -e "These are the documents that were found:\n"
+	#Set output's color to red
+	tput setaf 1
+	
+	for doc in $founded_docs; do	
+		echo $doc
+	done
+
+	#Reset output's color 
+	tput sgr0 
+}
+
+fn_count_books() {
+	local doc
+	local cnt=0
+	local founded_docs
+
+	founded_docs=$(cat $TMP_FILE 2> /dev/null)
+	if [ ! $? -eq 0 ]; then
+		echo Error: \'$TMP_FILE\' manipulation while the program is running are disallowed.
+		exit -1
+	fi
+	
+	for doc in $founded_docs; do 
+		(( cnt++ ))
+	done
+
+	return $cnt
+}
+
+fn_final_book_name() {
+	echo -ne "\nWhich one of them would you like to open: "
+	read book_name
+}
+
+fn_generate_books_paths() {
+	local path
+	
+	if [ $r_status -eq 1 ]; then
+		for path in $1/*; do
+			if [ -d $path ]; then
+				fn_generate_books_paths $path
+			elif [ -f $path ]; then
+				 echo $path >> $TMP_FILE
+			fi
+		done
+	else 
+		for path in $1/*; do
+			if [ -f $path ]; then
+				echo $path >> $TMP_FILE
+			fi
+		done
+	fi
+}
+
+fn_get_book_path() {
+	local founded_paths
+	local path
+	local grep_opt=""
+
+	founded_paths=$(cat $TMP_FILE 2> /dev/null)
+	if [ ! $? -eq 0 ]; then
+	        echo Error: \'$TMP_FILE\' manipulation while the program is running are disallowed.
+		exit -1
+	fi
+
+	if [ $i_status -eq 1 ]; then
+		grep_opt=-i
+	fi
+
+	for path in $founded_paths; do 
+		if ! echo $path | grep -q $grep_opt $book_name; then 
+			continue
+		fi
+
+		book_path=${path}
+		break
+	done
+}
+
+fn_open_book() {
+	$pdf_viewer $book_path 2> /dev/null
+
+	if [ ! $? -eq 0 ]; then 
+		echo 
+		echo Error: \'$book_path\' can\'t be opened. 
+		exit -1
+	fi
+
+	echo -e "\nOpening: $book_path"
+}
+
+fn_help_message() {
+	echo Usage: rdoc \<options\> [argument]
+	echo 
+	echo Available options:
+	echo " -h               Display this help message.                                                   "
+	echo " -g               Generate new configuration files.                                            "
+	echo " -r               Allow recursive searching for the document.                                  "
+	echo " -i               Ignore case distinctions while searching for the document.                   "
+	echo " -s               Search for the document and display results.                                 "  
+	echo "                  This option takes a document name or a part of it as an argument.            "
+	echo " -o               Search for the document, display results then open it using your pdf viewer. "
+	echo "                  This option takes a document name or a part of it as an argument.            "
+	echo "                  (Default)                                                                    "
+	echo "NOTE:                                                                                          "
+	echo "     When using '-s' or '-o' option in a combination of other options like this:               "
+	echo "                                                                                               "
+	echo "     $ rdoc -ris document_name                                                                 "
+	echo "                                                                                               "
+	echo "     Please make sure that it's the last option; to avoid unexpected behaviour.                "  
+}
+
+
+doc_dir=""
+pdf_viewer=""
+book_path=""
+book_name=${BASH_ARGV[0]} #book_name equals to the last arg by defualt so the default option ('-o') will work.
+
+#Options status
+r_status=0
+i_status=0
+s_status=0
+o_status=1 #Make -o the default option 
+
+
+#Display help message if no options were passed 
+if [ $# -eq 0 ]; then
+	fn_help_message
+	exit 0
+fi
+
+while getopts ":hgris:o:" opt; do
+	case $opt in 
+		h)
+			fn_help_message
+			exit 0
+			;;
+		g)
+			fn_generate_configs
+			o_status=0
+			;;
+		r)
+			r_status=1
+			;;
+		i)
+			i_status=1
+			;;
+		s)
+			book_name=$OPTARG
+			s_status=1
+			o_status=0 
+			;;
+		o)
+			book_name=$OPTARG
+			;;
+		:)
+			echo Error: an argument is required for \'-$OPTARG\' option.
+			echo Try -h for help.
+			exit -1
+			;;
+		*)
+			echo Error: unknown option \'-$OPTARG\'.
+			echo Try -h for help.
+			exit -1
+			;;
+	esac
+done
+
+if [ $s_status -eq 1 ] || [ $o_status -eq 1 ]; then 
+	#Make sure there isn't $TMP_FILE already generated from previous runs.
+	rm $TMP_FILE 2> /dev/null
+
+	fn_read_configs
+fi
+
+if [ $s_status -eq 1 ]; then
+	fn_search_for_book $doc_dir
+	fn_display_books
+elif [ $o_status -eq 1 ]; then 
+	fn_search_for_book $doc_dir
+	fn_display_books
+	fn_count_books
+	if [ $? -gt 1 ]; then #If more than 1 book were found with $book_name in it
+		fn_final_book_name
+		#Clean any leftovers of $TMP_FILE to search properly
+		rm $TMP_FILE 2> /dev/null
+		#Make sure that the user chose an available document
+		fn_search_for_book $doc_dir
+		if [ ! -f $TMP_FILE ]; then 
+			echo 
+			echo Error: no document was found with \'$book_name\' in it.
+			exit -1
+		fi
+
+		#Make sure that the user is specific enough about the book name
+		fn_count_books
+		if [ $? -gt 1 ]; then
+			echo
+			echo Error: More than 1 book was found with the name \'$book_name\' in it.
+			exit -1
+		fi
+	fi
+	
+	echo -n "" > $TMP_FILE #Make sure $TMP_FILE is empty so it'll be usable in fn_generate_books_paths
+	fn_generate_books_paths $doc_dir
+	fn_get_book_path
+	fn_open_book
+fi
+
+exit 0
