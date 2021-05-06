@@ -33,8 +33,8 @@ If you did the previous installation steps you can run the program from terminal
 by typing:   
     
    ```rdoc```    
-   
-It'll display a help message, read it and you are ready to go.
+
+It'll display a help message, read it and then you are ready to go.
 
 ## Contributing
 Pull requests are welcomed and appreciated.
