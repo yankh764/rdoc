@@ -32,7 +32,7 @@ Note: You can copy the program to wherever you wish but it is recomendded to kee
 If you did the previous installation steps you can run the program from terminal simply     
 by typing:   
     
-    ```rdoc```    
+	```rdoc```    
 
 It'll display a help message, read it and then you are ready to go.
 
