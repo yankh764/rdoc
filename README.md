@@ -19,12 +19,16 @@ Note: The first 4 dependencies should be already installed by default on most li
 * Make sure all the previous dependencies are installed and all the requirements are implemented.
 * Clone this repo by typing:   
     
-    `git clone https://github.com/yankh764/rdoc.git`    
+    ```
+    user $ git clone https://github.com/yankh764/rdoc.git
+    ```    
 
 * Move to the cloned directory and type:    
     
-    `cp rdoc /usr/local/bin/rdoc` (With root privileges)    
-    `chmod 755 /usr/local/bin/rdoc` (With root privileges)
+    ```
+    root # cp rdoc /usr/local/bin/rdoc    
+    root # chmod 755 /usr/local/bin/rdoc
+    ```
     
 Note: You can copy the program to wherever you wish but it is recomendded to keep it in your `PATH`.   
 
@@ -33,7 +37,7 @@ Note: You can copy the program to wherever you wish but it is recomendded to kee
     
     `rdoc`     
 
-It'll display a help message, read it and then you are ready to go.
+* It'll display a help message, read it and then you are ready to go.
 
 ## Contributing
 Pull requests are welcomed and appreciated.
