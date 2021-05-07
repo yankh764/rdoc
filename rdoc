@@ -54,7 +54,11 @@ fn_search_for_book() {
 			if [ -d $path ]; then 
 				fn_search_for_book $path
 			elif [ -f $path ]; then 
-				if echo $path | grep -q $grep_opt $book_name; then 
+				#Redirect grep help message if book_name has the program's options value.
+				#This would happen if the user called the program with the defualt behaviour,
+				#plus with one of the available options but he/she omitted to pass the doc_name
+				#so book_name will get the value of the passed options wich will trhow the grep help message.
+				if echo $path | grep -q $grep_opt $book_name 2> /dev/null; then 
 					echo $path | sed "s|$string_to_exclude||" >> $TMP_FILE
 				fi
 			fi
@@ -62,7 +66,8 @@ fn_search_for_book() {
 	else
 		for path in $1/*; do
 			if [ -f $path ]; then 
-				if echo $path | grep -q $grep_opt $book_name; then 
+				#Redirect grep help message for the same reasons as above
+				if echo $path | grep -q $grep_opt $book_name 2> /dev/null; then 
 					echo $path | sed "s|$string_to_exclude||" >> $TMP_FILE
 				fi
 			fi
