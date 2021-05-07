@@ -21,21 +21,21 @@ fn_generate_configs() {
 	echo $pdf_viewer_name > $CONF_PDF_VIEWER
 	echo 
 
-	echo Your configurations were generated succesfully.
+	echo "Your configurations were generated succesfully."
 }
 
 fn_read_configs() {
 	doc_dir=$(cat $CONF_DOC_DIR 2> /dev/null)
 	if [ ! $? -eq 0 ]; then 
-		echo Error: one or all of your configuration files are missing.
-		echo Try -h for help.
+		echo "Error: one or all of your configuration files are missing."
+		echo "Try -h for help."
 		exit -1
 	fi
 
 	pdf_viewer=$(cat $CONF_PDF_VIEWER 2> /dev/null) 
 	if [ ! $? -eq 0 ]; then
-		echo Error: one or all of your configuration files are missing.
-		echo Try -h for help.
+		echo "Error: one or all of your configuration files are missing."
+		echo "Try -h for help."
 		exit -1
 	fi
 }
@@ -46,7 +46,7 @@ fn_search_for_book() {
 	local string_to_exclude="$1/"
 	
 	if [ $i_status -eq 1 ]; then 
-		grep_opt=-i
+		grep_opt="-i"
 	fi
 
 	if [ $r_status -eq 1 ]; then #Search recursively  
@@ -78,7 +78,7 @@ fn_display_books() {
 	#Make sure a book was founded and TMP_FILE was generated
 	founded_docs=$(cat $TMP_FILE 2> /dev/null)
 	if [ ! $? -eq 0 ]; then 	
-		echo Error: no document was found with \'$book_name\' in it.
+		echo "Error: no document was found with '$book_name' in it."
 		exit -1
 	fi
 
@@ -101,7 +101,7 @@ fn_count_books() {
 
 	founded_docs=$(cat $TMP_FILE 2> /dev/null)
 	if [ ! $? -eq 0 ]; then
-		echo Error: \'$TMP_FILE\' manipulation while the program is running are disallowed.
+		echo "Error: '$TMP_FILE' manipulation while the program is running are disallowed."
 		exit -1
 	fi
 	
@@ -144,12 +144,12 @@ fn_get_book_path() {
 
 	founded_paths=$(cat $TMP_FILE 2> /dev/null)
 	if [ ! $? -eq 0 ]; then
-	        echo Error: \'$TMP_FILE\' manipulation while the program is running are disallowed.
+	        echo "Error: '$TMP_FILE' manipulation while the program is running are disallowed."
 		exit -1
 	fi
 
 	if [ $i_status -eq 1 ]; then
-		grep_opt=-i
+		grep_opt="-i"
 	fi
 
 	for path in $founded_paths; do 
@@ -167,7 +167,7 @@ fn_open_book() {
 
 	if [ ! $? -eq 0 ]; then 
 		echo 
-		echo Error: \'$book_path\' can\'t be opened. 
+		echo "Error: '$book_path' can't be opened." 
 		exit -1
 	fi
 
@@ -175,9 +175,9 @@ fn_open_book() {
 }
 
 fn_help_message() {
-	echo Usage: rdoc \<options\> [argument]
+	echo "Usage: rdoc <options> [argument]"
 	echo 
-	echo Available options:
+	echo "Available options:                                                                             "
 	echo " -h               Display this help message.                                                   "
 	echo " -g               Generate new configuration files.                                            "
 	echo " -r               Allow recursive searching for the document.                                  "
@@ -239,13 +239,13 @@ while getopts ":hgris:o:" opt; do
 			book_name=$OPTARG
 			;;
 		:)
-			echo Error: an argument is required for \'-$OPTARG\' option.
-			echo Try -h for help.
+			echo "Error: an argument is required for '-$OPTARG' option."
+			echo "Try -h for help."
 			exit -1
 			;;
 		*)
-			echo Error: unknown option \'-$OPTARG\'.
-			echo Try -h for help.
+			echo "Error: unknown option '-$OPTARG'."
+			echo "Try -h for help."
 			exit -1
 			;;
 	esac
@@ -273,7 +273,7 @@ elif [ $o_status -eq 1 ]; then
 		fn_search_for_book $doc_dir
 		if [ ! -f $TMP_FILE ]; then 
 			echo 
-			echo Error: no document was found with \'$book_name\' in it.
+			echo "Error: no document was found with '$book_name' in it."
 			exit -1
 		fi
 
@@ -281,7 +281,7 @@ elif [ $o_status -eq 1 ]; then
 		fn_count_books
 		if [ $? -gt 1 ]; then
 			echo
-			echo Error: More than 1 book was found with the name \'$book_name\' in it.
+			echo "Error: More than 1 book was found with the name '$book_name' in it."
 			exit -1
 		fi
 	fi
