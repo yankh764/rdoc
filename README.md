@@ -26,7 +26,7 @@ Note: The first 4 dependencies should be already installed by default on most li
 * Move to the cloned directory and type:    
     
     ```Bash
-    root # cp rdoc /usr/local/bin/rdoc    
+    root # cp rdoc /usr/local/bin/rdoc
     root # chmod 755 /usr/local/bin/rdoc
     ```
     
