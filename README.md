@@ -30,7 +30,7 @@ Note: The first 4 dependencies should be already installed by default on most li
     root # chmod 755 /usr/local/bin/rdoc
     ```
     
-Note: You can copy the program to wherever you wish but it is recomendded to keep it in your `$PATH`.   
+Note: You can copy the program to wherever you wish but it is recomendded to keep it in your **PATH**.   
 
 ## Usage
 * If you did the previous installation steps you can run the program from terminal simply by typing:   
