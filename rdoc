@@ -199,7 +199,7 @@ fn_help_message() {
 doc_dir=""
 pdf_viewer=""
 book_path=""
-book_name=${BASH_ARGV[0]} #book_name equals to the last arg by defualt so the default option ('-o') will work.
+book_name=${!#} #book_name equals to the last arg by defualt so the default option ('-o') will work.
 
 #Options status
 r_status=0
