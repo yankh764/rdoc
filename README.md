@@ -19,13 +19,13 @@ Note: The first 4 dependencies should be already installed by default on most li
 * Make sure all the previous dependencies are installed and all the requirements are implemented.
 * Clone this repo by typing:   
     
-    ```
-    user $ git clone https://github.com/yankh764/rdoc.git
+    ```Bash
+    user # git clone https://github.com/yankh764/rdoc.git
     ```    
 
 * Move to the cloned directory and type:    
     
-    ```
+    ```Bash
     root # cp rdoc /usr/local/bin/rdoc    
     root # chmod 755 /usr/local/bin/rdoc
     ```
