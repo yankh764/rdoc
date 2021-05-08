@@ -1,74 +1,73 @@
-#!/bin/env bash
+#!/usr/bin/env bash
 
 declare -r CONF_DIR_PATH="$HOME/.config/rdoc"
-declare -r CONF_DOC_DIR="$CONF_DIR_PATH/doc_dir"
-declare -r CONF_PDF_VIEWER="$CONF_DIR_PATH/pdf_viewer"
-declare -r TMP_FILE="/tmp/.rdoc_tmp"
-
+declare -r TMP_FILE="/tmp/rdoc_tmp.$$" 
 
 fn_generate_configs() {
 	local doc_dir_path
 	local pdf_viewer_name
 
-	mkdir -p $CONF_DIR_PATH
+	mkdir -p "$CONF_DIR_PATH"
 	
-	echo -n "Please enter your documents directorie's full path: "
-	read doc_dir_path
-	echo $doc_dir_path > $CONF_DOC_DIR
+	printf "Please enter your documents directory full path: "
+	read -r doc_dir_path
+	echo "$doc_dir_path" > "$CONF_DIR_PATH/doc_dir"
 
-	echo -ne "\nPlease enter your pdf's viewer name: "
-	read pdf_viewer_name
-	echo $pdf_viewer_name > $CONF_PDF_VIEWER
-	echo 
+	printf "\nPlease enter your pdf's viewer name: "
+	read -r pdf_viewer_name
+	echo "$pdf_viewer_name" > "$CONF_DIR_PATH/pdf_viewer"
 
-	echo "Your configurations were generated succesfully."
+	printf "\nYour configurations were generated succesfully.\n"
 }
 
 fn_read_configs() {
-	doc_dir=$(cat $CONF_DOC_DIR 2> /dev/null)
-	if [ ! $? -eq 0 ]; then 
-		echo "Error: one or all of your configuration files are missing."
-		echo "Try -h for help."
-		exit -1
+	doc_dir=$(cat "$CONF_DIR_PATH/doc_dir" 2> /dev/null)
+	
+	if [ $? -ne 0 ]; then
+		echo Error: one or all of your configuration files are missing.
+		echo Try -h for help.
+		exit 1
 	fi
 
-	pdf_viewer=$(cat $CONF_PDF_VIEWER 2> /dev/null) 
-	if [ ! $? -eq 0 ]; then
-		echo "Error: one or all of your configuration files are missing."
-		echo "Try -h for help."
-		exit -1
+	pdf_viewer=$(cat "$CONF_DIR_PATH/pdf_viewer" 2> /dev/null) 
+	if [ $? -ne 0 ]; then
+		echo Error: one or all of your configuration files are missing.
+		echo Try -h for help.
+		exit 1
 	fi
+
+	last_tmp=$(cat "$CONF_DIR_PATH/last_tmp" 2> /dev/null) #Not critical config
 }
 
 fn_search_for_book() {
 	local path
-	local grep_opt=""
+	local grep_opt="-q"
 	local string_to_exclude="$1/"
 	
-	if [ $i_status -eq 1 ]; then 
-		grep_opt="-i"
+	if [ "$i_status" -eq 1 ]; then 
+		grep_opt="-qi"
 	fi
 
-	if [ $r_status -eq 1 ]; then #Search recursively  
-		for path in $1/*; do	
-			if [ -d $path ]; then 
-				fn_search_for_book $path
-			elif [ -f $path ]; then 
+	if [ "$r_status" -eq 1 ]; then #Search recursively  
+		for path in "$1"/*; do	
+			if [ -d "$path" ]; then 
+				fn_search_for_book "$path"
+			elif [ -f "$path" ]; then 
 				#Redirect grep help message if book_name has the program's options value.
 				#This would happen if the user called the program with the defualt behaviour,
 				#plus with one of the available options but he/she omitted to pass the doc_name
 				#so book_name will get the value of the passed options wich will trhow the grep help message.
-				if echo $path | grep -q $grep_opt $book_name 2> /dev/null; then 
-					echo $path | sed "s|$string_to_exclude||" >> $TMP_FILE
+				if echo "$path" | grep $grep_opt "$book_name" 2> /dev/null; then 
+					echo "$path" | sed "s|${string_to_exclude}||" >> "$TMP_FILE"
 				fi
 			fi
 		done
 	else
-		for path in $1/*; do
-			if [ -f $path ]; then 
+		for path in "$1"/*; do
+			if [ -f "$path" ]; then 
 				#Redirect grep help message for the same reasons as above
-				if echo $path | grep -q $grep_opt $book_name 2> /dev/null; then 
-					echo $path | sed "s|$string_to_exclude||" >> $TMP_FILE
+				if echo "$path" | grep $grep_opt "$book_name" 2> /dev/null; then 
+					echo "$path" | sed "s|${string_to_exclude}||" >> "$TMP_FILE"
 				fi
 			fi
 		done
@@ -81,18 +80,18 @@ fn_display_books() {
 	local founded_docs
 	
 	#Make sure a book was founded and TMP_FILE was generated
-	founded_docs=$(cat $TMP_FILE 2> /dev/null)
-	if [ ! $? -eq 0 ]; then 	
-		echo "Error: no document was found with '$book_name' in it."
-		exit -1
+	founded_docs=$(cat "$TMP_FILE" 2> /dev/null)
+	if [ $? -ne 0 ]; then 	
+		printf "Error: no document was found with \'%s\' in it.\n" "$book_name"
+		exit 1
 	fi
 
-	echo -e "These are the documents that were found:\n"
+	printf "These are the documents that were found:\n\n"
 	#Set output's color to red
 	tput setaf 1
 	
 	for doc in $founded_docs; do	
-		echo $doc
+		echo "$doc"
 	done
 
 	#Reset output's color 
@@ -104,39 +103,39 @@ fn_count_books() {
 	local founded_docs
 	local cnt=0
 
-	founded_docs=$(cat $TMP_FILE 2> /dev/null)
-	if [ ! $? -eq 0 ]; then
-		echo "Error: '$TMP_FILE' manipulation while the program is running are disallowed."
-		exit -1
+	founded_docs=$(cat "$TMP_FILE" 2> /dev/null)
+	if [ $? -ne 0 ]; then
+		printf "\nError: \'%s\' manipulation while the program is running are disallowed.\n" "$TMP_FILE"
+		exit 1
 	fi
 	
 	for doc in $founded_docs; do 
 		(( cnt++ ))
 	done
 
-	return $cnt
+	return "$cnt"
 }
 
 fn_final_book_name() {
-	echo -ne "\nWhich one of them would you like to open: "
-	read book_name
+	printf "\nWhich one of them would you like to open: "
+	read -r book_name
 }
 
 fn_generate_books_paths() {
 	local path
 	
-	if [ $r_status -eq 1 ]; then
-		for path in $1/*; do
-			if [ -d $path ]; then
-				fn_generate_books_paths $path
-			elif [ -f $path ]; then
-				 echo $path >> $TMP_FILE
+	if [ "$r_status" -eq 1 ]; then
+		for path in "$1"/*; do
+			if [ -d "$path" ]; then
+				fn_generate_books_paths "$path"
+			elif [ -f "$path" ]; then
+				 echo "$path" >> "$TMP_FILE"
 			fi
 		done
 	else 
-		for path in $1/*; do
-			if [ -f $path ]; then
-				echo $path >> $TMP_FILE
+		for path in "$1"/*; do
+			if [ -f "$path" ]; then
+				echo "$path" >> "$TMP_FILE"
 			fi
 		done
 	fi
@@ -145,38 +144,37 @@ fn_generate_books_paths() {
 fn_get_book_path() {
 	local founded_paths
 	local path
-	local grep_opt=""
+	local grep_opt="-q"
 
-	founded_paths=$(cat $TMP_FILE 2> /dev/null)
-	if [ ! $? -eq 0 ]; then
-	        echo "Error: '$TMP_FILE' manipulation while the program is running are disallowed."
-		exit -1
+	founded_paths=$(cat "$TMP_FILE" 2> /dev/null)
+	if [ $? -ne 0 ]; then
+		printf "\nError: \'%s\' manipulation while the program is running are disallowed.\n" "$TMP_FILE"
+		exit 1
 	fi
 
-	if [ $i_status -eq 1 ]; then
-		grep_opt="-i"
+	if [ "$i_status" -eq 1 ]; then
+		grep_opt="-qi"
 	fi
 
 	for path in $founded_paths; do 
-		if ! echo $path | grep -q $grep_opt $book_name; then 
+		if ! echo "$path" | grep $grep_opt "$book_name"; then 
 			continue
 		fi
 
-		book_path=$path
+		book_path="$path"
 		break
 	done
 }
 
 fn_open_book() {
-	$pdf_viewer $book_path 2> /dev/null
+	"$pdf_viewer" "$book_path" 2> /dev/null
 
-	if [ ! $? -eq 0 ]; then 
-		echo 
-		echo "Error: '$book_path' can't be opened." 
-		exit -1
+	if [ $? -ne 0 ]; then 
+		printf "\nError: \'%s\' can\'t be opened.\n" "$book_path" 
+		exit 1
 	fi
 
-	echo -e "\nOpening: $book_path"
+	printf "\nOpening: %s\n" "$book_path"
 }
 
 fn_help_message() {
@@ -204,6 +202,7 @@ fn_help_message() {
 doc_dir=""
 pdf_viewer=""
 book_path=""
+last_tmp=""
 book_name=${!#} #book_name equals to the last arg by defualt so the default option ('-o') will work.
 
 #Options status
@@ -236,63 +235,63 @@ while getopts ":hgris:o:" opt; do
 			i_status=1
 			;;
 		s)
-			book_name=$OPTARG
+			book_name="$OPTARG"
 			s_status=1
 			o_status=0 
 			;;
 		o)
-			book_name=$OPTARG
+			book_name="$OPTARG"
 			;;
 		:)
-			echo "Error: an argument is required for '-$OPTARG' option."
-			echo "Try -h for help."
-			exit -1
+			printf "Error: an argument is required for \'-%s\' option.\n" "$OPTARG"
+			echo Try -h for help.
+			exit 1
 			;;
 		*)
-			echo "Error: unknown option '-$OPTARG'."
-			echo "Try -h for help."
-			exit -1
+			printf "Error: unknown option \'-%s\'.\n" "$OPTARG"
+			echo Try -h for help.
+			exit 1
 			;;
 	esac
 done
 
-if [ $s_status -eq 1 ] || [ $o_status -eq 1 ]; then 
-	#Make sure there isn't $TMP_FILE already generated from previous runs.
-	rm $TMP_FILE 2> /dev/null
-
+if [ "$s_status" -eq 1 ] || [ "$o_status" -eq 1 ]; then 
 	fn_read_configs
+	
+	rm "$last_tmp" 2> /dev/null #Remove last generated file if exists so /tmp won't get messy with a lot of runs
+	
+	echo "$TMP_FILE" > "$CONF_DIR_PATH/last_tmp" 2> /dev/null #save $TMP_FILE to delete it the next run (Not critical step) 
+
 fi
 
-if [ $s_status -eq 1 ]; then
-	fn_search_for_book $doc_dir
+if [ "$s_status" -eq 1 ]; then
+	fn_search_for_book "$doc_dir"
 	fn_display_books
-elif [ $o_status -eq 1 ]; then 
-	fn_search_for_book $doc_dir
+elif [ "$o_status" -eq 1 ]; then 
+	fn_search_for_book "$doc_dir"
 	fn_display_books
 	fn_count_books
 	if [ $? -gt 1 ]; then #If more than 1 book were found with $book_name in it
 		fn_final_book_name
 		#Clean any leftovers of $TMP_FILE to search properly
-		rm $TMP_FILE 2> /dev/null
+		rm "$TMP_FILE" 2> /dev/null
 		#Make sure that the user chose an available document
-		fn_search_for_book $doc_dir
-		if [ ! -f $TMP_FILE ]; then 
-			echo 
-			echo "Error: no document was found with '$book_name' in it."
-			exit -1
+		fn_search_for_book "$doc_dir"
+		if [ ! -f "$TMP_FILE" ]; then 
+			printf "\nError: no document was found with \'%s\' in it.\n" "$book_name"
+			exit 1
 		fi
 
 		#Make sure that the user is specific enough about the book name
 		fn_count_books
 		if [ $? -gt 1 ]; then
-			echo
-			echo "Error: More than 1 book was found with the name '$book_name' in it."
-			exit -1
+			printf "\nError: More than 1 book was found with the name \'%s\' in it.\n" "$book_name"
+			exit 1
 		fi
 	fi
 	
-	: > $TMP_FILE #Make sure $TMP_FILE is empty so it'll be usable in fn_generate_books_paths
-	fn_generate_books_paths $doc_dir
+	: > "$TMP_FILE" #Make sure $TMP_FILE is empty so it'll be usable in fn_generate_books_paths
+	fn_generate_books_paths "$doc_dir"
 	fn_get_book_path
 	fn_open_book
 fi
