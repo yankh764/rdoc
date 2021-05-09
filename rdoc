@@ -3,6 +3,10 @@
 declare -r CONF_DIR_PATH="$HOME/.config/rdoc"
 declare -r TMP_FILE="/tmp/rdoc_tmp.$$" 
 
+#Trap the following signals and do cleanup before exiting 
+trap 'rm -f "$TMP_FILE" 2> /dev/null && exit 0' EXIT 
+trap 'rm -f "$TMP_FILE" 2> /dev/null && echo && exit 1' SIGINT
+
 fn_generate_configs() {
 	local doc_dir_path
 	local pdf_viewer_name
@@ -21,22 +25,17 @@ fn_generate_configs() {
 }
 
 fn_read_configs() {
-	doc_dir=$(cat "$CONF_DIR_PATH/doc_dir" 2> /dev/null)
-	
-	if [ $? -ne 0 ]; then
+	if ! doc_dir=$(cat "$CONF_DIR_PATH/doc_dir" 2> /dev/null); then
 		echo Error: one or all of your configuration files are missing.
 		echo Try -h for help.
 		exit 1
 	fi
 
-	pdf_viewer=$(cat "$CONF_DIR_PATH/pdf_viewer" 2> /dev/null) 
-	if [ $? -ne 0 ]; then
+	if ! pdf_viewer=$(cat "$CONF_DIR_PATH/pdf_viewer" 2> /dev/null); then
 		echo Error: one or all of your configuration files are missing.
 		echo Try -h for help.
 		exit 1
 	fi
-
-	last_tmp=$(cat "$CONF_DIR_PATH/last_tmp" 2> /dev/null) #Not critical config
 }
 
 fn_search_for_book() {
@@ -58,7 +57,7 @@ fn_search_for_book() {
 				#plus with one of the available options but he/she omitted to pass the doc_name
 				#so book_name will get the value of the passed options wich will trhow the grep help message.
 				if echo "$path" | grep $grep_opt "$book_name" 2> /dev/null; then 
-					echo "$path" | sed "s|${string_to_exclude}||" >> "$TMP_FILE"
+					echo "${path//"$string_to_exclude"/}" >> "$TMP_FILE"
 				fi
 			fi
 		done
@@ -67,7 +66,7 @@ fn_search_for_book() {
 			if [ -f "$path" ]; then 
 				#Redirect grep help message for the same reasons as above
 				if echo "$path" | grep $grep_opt "$book_name" 2> /dev/null; then 
-					echo "$path" | sed "s|${string_to_exclude}||" >> "$TMP_FILE"
+					echo "${path//"$string_to_exclude"/}" >> "$TMP_FILE"
 				fi
 			fi
 		done
@@ -80,8 +79,7 @@ fn_display_books() {
 	local founded_docs
 	
 	#Make sure a book was founded and TMP_FILE was generated
-	founded_docs=$(cat "$TMP_FILE" 2> /dev/null)
-	if [ $? -ne 0 ]; then 	
+	if ! founded_docs=$(cat "$TMP_FILE" 2> /dev/null); then 	
 		printf "Error: no document was found with \'%s\' in it.\n" "$book_name"
 		exit 1
 	fi
@@ -103,8 +101,7 @@ fn_count_books() {
 	local founded_docs
 	local cnt=0
 
-	founded_docs=$(cat "$TMP_FILE" 2> /dev/null)
-	if [ $? -ne 0 ]; then
+	if ! founded_docs=$(cat "$TMP_FILE" 2> /dev/null); then
 		printf "\nError: \'%s\' manipulation while the program is running are disallowed.\n" "$TMP_FILE"
 		exit 1
 	fi
@@ -146,8 +143,7 @@ fn_get_book_path() {
 	local path
 	local grep_opt="-q"
 
-	founded_paths=$(cat "$TMP_FILE" 2> /dev/null)
-	if [ $? -ne 0 ]; then
+	if ! founded_paths=$(cat "$TMP_FILE" 2> /dev/null); then
 		printf "\nError: \'%s\' manipulation while the program is running are disallowed.\n" "$TMP_FILE"
 		exit 1
 	fi
@@ -167,10 +163,9 @@ fn_get_book_path() {
 }
 
 fn_open_book() {
-	"$pdf_viewer" "$book_path" 2> /dev/null
 
-	if [ $? -ne 0 ]; then 
-		printf "\nError: \'%s\' can\'t be opened.\n" "$book_path" 
+	if ! "$pdf_viewer" "$book_path" 2> /dev/null; then 
+		printf "\nError: %s can\'t be opened.\n" "$book_path" 
 		exit 1
 	fi
 
@@ -178,31 +173,31 @@ fn_open_book() {
 }
 
 fn_help_message() {
-	echo "Usage: rdoc <options> [argument]"
-	echo 
-	echo "Available options:                                                                             "
-	echo " -h               Display this help message.                                                   "
-	echo " -g               Generate new configuration files.                                            "
-	echo " -r               Allow recursive searching for the document.                                  "
-	echo " -i               Ignore case distinctions while searching for the document.                   "
-	echo " -s               Search for the document and display results.                                 "  
-	echo "                  This option takes a document name or a part of it as an argument.            "
-	echo " -o               Search for the document, display results then open it using your pdf viewer. "
-	echo "                  This option takes a document name or a part of it as an argument.            "
-	echo "                  (Default)                                                                    "
-	echo "NOTE:                                                                                          "
-	echo "     When using '-s' or '-o' option in a combination of other options like this:               "
-	echo "                                                                                               "
-	echo "     $ rdoc -ris document_name                                                                 "
-	echo "                                                                                               "
-	echo "     Please make sure that it's the last option; to avoid unexpected behaviour.                "  
+printf "Usage: rdoc <options> [argument]
+ 
+Available options:                                                                             
+ -h               Display this help message.                                                   
+ -g               Generate new configuration files.                                            
+ -r               Allow recursive searching for the document.                                  
+ -i               Ignore case distinctions while searching for the document.                   
+ -s               Search for the document and display results.                                   
+                  This option takes a document name or a part of it as an argument.            
+ -o               Search for the document, display results then open it using your pdf viewer. 
+                  This option takes a document name or a part of it as an argument.            
+                  (Default)                                                                    
+NOTE:                                                                                          
+     When using '-s' or '-o' option in a combination of other options like this:               
+                                                                                               
+     $ rdoc -ris document_name                                                                 
+                                                                                               
+     Please make sure that it's the last option; to avoid unexpected behaviour.
+"            
 }
 
 
 doc_dir=""
 pdf_viewer=""
 book_path=""
-last_tmp=""
 book_name=${!#} #book_name equals to the last arg by defualt so the default option ('-o') will work.
 
 #Options status
@@ -210,7 +205,6 @@ r_status=0
 i_status=0
 s_status=0
 o_status=1 #Make -o the default option 
-
 
 #Display help message if no options were passed 
 if [ $# -eq 0 ]; then
@@ -255,19 +249,12 @@ while getopts ":hgris:o:" opt; do
 	esac
 done
 
-if [ "$s_status" -eq 1 ] || [ "$o_status" -eq 1 ]; then 
-	fn_read_configs
-	
-	rm "$last_tmp" 2> /dev/null #Remove last generated file if exists so /tmp won't get messy with a lot of runs
-	
-	echo "$TMP_FILE" > "$CONF_DIR_PATH/last_tmp" 2> /dev/null #save $TMP_FILE to delete it the next run (Not critical step) 
-
-fi
-
 if [ "$s_status" -eq 1 ]; then
+	fn_read_configs
 	fn_search_for_book "$doc_dir"
 	fn_display_books
 elif [ "$o_status" -eq 1 ]; then 
+	fn_read_configs
 	fn_search_for_book "$doc_dir"
 	fn_display_books
 	fn_count_books

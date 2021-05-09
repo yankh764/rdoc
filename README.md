@@ -9,11 +9,10 @@ save you a lot of time if you have lots of documents like me.
 1. Bash 
 2. GNU Core Utilities
 3. grep
-4. sed
-5. A PDF Viewer
-6. A directory that contains all your documents.    
+4. A PDF Viewer
+5. A directory that contains all your documents.    
 
-Note: The first 4 dependencies should be already installed by default on most linux distros.
+Note: The first 3 dependencies should be already installed by default on most linux distros.
 
 ## Installation 
 * Make sure all the previous dependencies are installed and all the requirements are implemented.
