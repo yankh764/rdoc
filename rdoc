@@ -1,11 +1,35 @@
 #!/usr/bin/env bash
 
 declare -r CONF_DIR_PATH="$HOME/.config/rdoc"
+declare -r CONF_FILE_PATH="$CONF_DIR_PATH/config"
 declare -r TMP_FILE="/tmp/rdoc_tmp.$$" 
 
 #Trap the following signals and do cleanup before exiting 
 trap 'rm -f "$TMP_FILE" 2> /dev/null && exit 0' EXIT 
 trap 'rm -f "$TMP_FILE" 2> /dev/null && echo && exit 1' SIGINT
+
+fn_help_message() {
+printf "Usage: rdoc <options> [argument]
+A command-line tool for searching and launching documents using your favorite PDF Viewer.
+
+Available options:                                                                             
+ -h               Display this help message.                                                   
+ -g               Generate new configuration files.                                            
+ -r               Allow recursive searching for the document.                                  
+ -i               Ignore case distinctions while searching for the document.                   
+ -s               Search for the document and display results.                                   
+                  This option takes a document name or a part of it as an argument.            
+ -o               Search for the document, display results then open it using your pdf viewer. 
+                  This option takes a document name or a part of it as an argument.            
+                  (Default)                                                                    
+NOTE:                                                                                          
+     When using '-s' or '-o' option in a combination of other options like this:               
+                                                                                               
+     $ rdoc -ris document_name                                                                 
+                                                                                               
+     Please make sure that it's the last option; to avoid unexpected behaviour.
+"            
+}
 
 fn_generate_configs() {
 	local doc_dir_path
@@ -15,24 +39,24 @@ fn_generate_configs() {
 	
 	printf "Please enter your documents directory full path: "
 	read -r doc_dir_path
-	echo "$doc_dir_path" > "$CONF_DIR_PATH/doc_dir"
+	echo "doc_dir=$doc_dir_path" > "$CONF_FILE_PATH"
 
 	printf "\nPlease enter your pdf's viewer name: "
 	read -r pdf_viewer_name
-	echo "$pdf_viewer_name" > "$CONF_DIR_PATH/pdf_viewer"
+	echo "pdf_viewer=$pdf_viewer_name" >> "$CONF_FILE_PATH"
 
 	printf "\nYour configurations were generated succesfully.\n"
 }
 
 fn_read_configs() {
-	if ! doc_dir=$(cat "$CONF_DIR_PATH/doc_dir" 2> /dev/null); then
-		echo Error: one or all of your configuration files are missing.
+	if ! source "$CONF_FILE_PATH" 2> /dev/null; then 
+		echo Error: can\'t read configurations file.
 		echo Try -h for help.
 		exit 1
 	fi
 
-	if ! pdf_viewer=$(cat "$CONF_DIR_PATH/pdf_viewer" 2> /dev/null); then
-		echo Error: one or all of your configuration files are missing.
+	if [ -z "$doc_dir" ] || [ -z "$pdf_viewer" ]; then 
+		echo Error: one of your configurations sections are missing.
 		echo Try -h for help.
 		exit 1
 	fi
@@ -172,31 +196,7 @@ fn_open_book() {
 	printf "\nOpening: %s\n" "$book_path"
 }
 
-fn_help_message() {
-printf "Usage: rdoc <options> [argument]
- 
-Available options:                                                                             
- -h               Display this help message.                                                   
- -g               Generate new configuration files.                                            
- -r               Allow recursive searching for the document.                                  
- -i               Ignore case distinctions while searching for the document.                   
- -s               Search for the document and display results.                                   
-                  This option takes a document name or a part of it as an argument.            
- -o               Search for the document, display results then open it using your pdf viewer. 
-                  This option takes a document name or a part of it as an argument.            
-                  (Default)                                                                    
-NOTE:                                                                                          
-     When using '-s' or '-o' option in a combination of other options like this:               
-                                                                                               
-     $ rdoc -ris document_name                                                                 
-                                                                                               
-     Please make sure that it's the last option; to avoid unexpected behaviour.
-"            
-}
 
-
-doc_dir=""
-pdf_viewer=""
 book_path=""
 book_name=${!#} #book_name equals to the last arg by defualt so the default option ('-o') will work.
 
