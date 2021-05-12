@@ -44,7 +44,7 @@ Note: You can copy the program to wherever you wish but it is recomendded to kee
 * It's a minor issue but I think it's good that you'll be aware of it. Because of the fact that I added   
 `disown` to the launching documents command and I couldn't find a way to check the return status of this    
 command, if some error occures while launching the document it'll display the regular message:     
-"Opening: /path/to/the/document".
+"Opening: /path/to/the/document".      
 But it's actually failing and it won't launch the document.
 
 ## Contributing
