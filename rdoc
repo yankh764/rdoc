@@ -187,12 +187,8 @@ fn_get_book_path() {
 }
 
 fn_open_book() {
-
-	if ! "$pdf_viewer" "$book_path" 2> /dev/null; then 
-		printf "\nError: %s can\'t be opened.\n" "$book_path" 
-		exit 1
-	fi
-
+	"$pdf_viewer" "$book_path" & disown 
+	
 	printf "\nOpening: %s\n" "$book_path"
 }
 
