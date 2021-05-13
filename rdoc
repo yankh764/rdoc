@@ -49,6 +49,7 @@ fn_generate_configs() {
 }
 
 fn_read_configs() {
+	# shellcheck source=/dev/null
 	if ! source "$CONF_FILE_PATH" 2> /dev/null; then 
 		echo Error: can\'t read configurations file.
 		echo Try -h for help.
@@ -187,9 +188,19 @@ fn_get_book_path() {
 }
 
 fn_open_book() {
-	"$pdf_viewer" "$book_path" & disown 
-	
-	printf "\nOpening: %s\n" "$book_path"
+	local log_file="$TMP_FILE.log"
+
+        "$pdf_viewer" "$book_path" 2> "$log_file" & disown
+
+        if [ -s "$log_file" ]; then #If log file isn't empty
+                printf "\nError: %s can\'t be opened.\n" "$book_path"
+                printf "\nFor more information check: %s\n" "$log_file"
+                exit 1
+        fi
+
+        printf "\nOpening: %s\n" "$book_path"
+
+        rm "$log_file" 2> /dev/null #Delete the empty log file
 }
 
 
